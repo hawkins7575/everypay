@@ -1,38 +1,138 @@
-.App {
-  text-align: center;
+@import url('https://fonts.googleapis.com/css2?family=Nanum+Square:wght@400;700;800&display=swap');
+
+/* General Body Styles */
+body {
+  background-color: #f4f7f9; /* A light, neutral background */
+  color: #333;
+  font-family: 'Nanum Square', sans-serif;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+/* Custom Card for main content areas */
+.card-custom {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+  border: none;
+  margin-top: 2rem;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+/* Custom Table Header */
+.table-header-custom th {
+  background-color: #e9ecef; /* A light grey for headers */
+  color: #495057;
+  border-bottom: 2px solid #dee2e6;
+  font-weight: 600;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+/* Custom Button Styles */
+.btn-primary {
+  background-color: #007bff; /* A professional blue */
+  border-color: #007bff;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
+/* Custom Navbar */
+.navbar-custom {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* Custom Modal Header */
+.modal-header-custom {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+/* Utility for icon alignment */
+.icon-text {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  gap: 0.5rem; /* space between icon and text */
 }
 
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+/* Responsive Mobile View */
+@media (max-width: 768px) {
+  .card-custom {
+    padding: 1rem;
+    margin-top: 1rem;
   }
-  to {
-    transform: rotate(360deg);
+
+  .mobile-card {
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+
+  .mobile-card .card-body {
+    padding: 1rem;
+  }
+
+  .mobile-card-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .mobile-card-row:last-child {
+    border-bottom: none;
+  }
+
+  .mobile-card-label {
+    font-weight: 600;
+    color: #555;
+  }
+
+  .mobile-card-value {
+    text-align: right;
+  }
+  
+  .mobile-totals-card {
+    margin-top: 1rem;
+  }
+}
+
+/* Customer Card List */
+.customer-list {
+  margin-top: 1rem;
+}
+
+.customer-card {
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: box-shadow 0.3s ease-in-out;
+}
+
+.customer-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.customer-card .card-header {
+  background-color: #f8f9fa;
+  font-weight: bold;
+}
+
+.customer-card .customer-name {
+  color: #007bff;
+  font-size: 1.1rem;
+}
+
+.customer-card .card-body p {
+  margin-bottom: 0.5rem;
+}
+
+.customer-card .card-footer {
+  background-color: #f8f9fa;
+  font-weight: bold;
+  color: #333;
+}
+
+@media (max-width: 991.98px) {
+  main {
+    padding-bottom: 70px; /* Adjust this value based on the actual height of your bottom nav */
   }
 }

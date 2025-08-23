@@ -1,0 +1,19 @@
+.bottom-nav {
+  background-color: #ffffff;
+  border-top: 1px solid #dee2e6;
+  box-shadow: 0 -2px 4px rgba(0,0,0,0.05);
+}
+
+.bottom-nav .nav-link {
+  color: #6c757d;
+  font-size: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.bottom-nav .nav-link.active {
+  color: #007bff;
+}
+
+.bottom-nav .nav-link svg {
+  margin-bottom: 0.25rem;
+}
