@@ -122,28 +122,14 @@ function Sales() {
       },
       (error) => {
         console.error('Sales data subscription error:', error);
-        setError('Firestore 연결에 실패했습니다. 로컬 데이터를 사용합니다.');
+        setError('데이터를 불러오는데 실패했습니다.');
         setLoading(false);
       }
     );
 
-    // 타임아웃 설정 - 5초 후에도 로딩 중이면 localStorage 사용
-    const timeoutId = setTimeout(() => {
-      if (loading) {
-        console.log('Firestore 연결 타임아웃, localStorage 사용');
-        setLoading(false);
-        setError('Firestore 연결 시간이 초과되었습니다. 로컬 데이터를 사용합니다.');
-        const savedSales = localStorage.getItem('sales');
-        if (savedSales) {
-          setSales(JSON.parse(savedSales));
-        }
-      }
-    }, 5000);
-
     // 컴포넌트 언마운트 시 구독 해제
     return () => {
       unsubscribe();
-      clearTimeout(timeoutId);
     };
   }, []);
 
@@ -198,24 +184,6 @@ function Sales() {
           }
         } catch (error) {
           console.error('고객 자동 등록 오류:', error);
-          // Fallback: localStorage에 저장
-          const savedCustomers = localStorage.getItem('customers') || '[]';
-          const customers = JSON.parse(savedCustomers);
-          if (!customers.some(c => c.phone === saleData.phone)) {
-            const newCustomer = { 
-              name: saleData.name, 
-              phone: saleData.phone, 
-              gender: '',
-              bankName: '', 
-              accountNumber: '', 
-              cards: [{ cardNumber: '', cardCompany: '' }],
-              carrier: '', 
-              birthdate: '', 
-              pw_hint: '', 
-              memo: '' 
-            };
-            localStorage.setItem('customers', JSON.stringify([...customers, { ...newCustomer, id: Date.now() }]));
-          }
         }
       }
       setShowModal(false);
@@ -270,11 +238,6 @@ function Sales() {
             </div>
           )}
 
-          {error && (
-            <div className="alert alert-warning" role="alert">
-              <strong>알림:</strong> {error} 로컬 데이터를 사용합니다.
-            </div>
-          )}
 
           {!loading && (isMobile ? (
             <>

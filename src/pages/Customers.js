@@ -267,18 +267,10 @@ function Customers() {
       },
       (error) => {
         console.error('Customer data subscription error:', error);
-        setError('고객 데이터를 불러오는데 실패했습니다. 로컬 데이터를 사용합니다.');
+        setError('고객 데이터를 불러오는데 실패했습니다.');
         setLoading(false);
-        const savedCustomers = localStorage.getItem('customers');
-        if (savedCustomers) {
-          setCustomers(JSON.parse(savedCustomers));
-        }
       }
     );
-
-    // 매출 데이터도 가져오기 (고객별 총 매출 계산용)
-    const savedSales = localStorage.getItem('sales');
-    if (savedSales) setSales(JSON.parse(savedSales));
 
     return () => unsubscribe();
   }, []);
