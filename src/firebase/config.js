@@ -31,10 +31,12 @@ try {
     db = getFirestore(app);
     console.log('Firebase 초기화 성공');
   } else {
-    console.warn('Firebase 설정이 유효하지 않습니다. localStorage를 사용합니다.');
+    console.error('Firebase 설정이 유효하지 않습니다. 환경변수를 확인해주세요.');
+    throw new Error('Firebase 환경변수가 설정되지 않았습니다.');
   }
 } catch (error) {
   console.error('Firebase 초기화 실패:', error);
+  throw error;
 }
 
 // 개발 환경에서는 에뮬레이터 사용 (선택사항)
