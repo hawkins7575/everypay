@@ -7,7 +7,7 @@ function NavigationBar() {
   return (
     <Navbar bg="light" variant="light" className="navbar-custom d-none d-lg-block">
       <Container>
-        <Navbar.Brand as={Link} to="/"><strong>EVERY PAY</strong></Navbar.Brand>
+        <Navbar.Brand as={Link} to="/"><strong>every pay</strong></Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="ms-auto">
