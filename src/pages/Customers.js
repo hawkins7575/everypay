@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Form, Button, Table, ButtonGroup, Modal, Row, Col, Alert, Card } from 'react-bootstrap';
 import { PlusCircleFill, PencilFill, TrashFill } from 'react-bootstrap-icons';
+import { customersService } from '../firebase/firestore';
 
 // Helper Functions
 const formatCurrency = (value) => Math.floor(value || 0).toLocaleString();
@@ -15,9 +16,10 @@ const getStartOfWeek = (date) => {
 const CustomerModal = ({ show, onHide, onSave, customer }) => {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [cardNumber, setCardNumber] = useState('');
+  const [gender, setGender] = useState('');
   const [bankName, setBankName] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
+  const [cards, setCards] = useState([{ cardNumber: '', cardCompany: '' }]);
   const [carrier, setCarrier] = useState('');
   const [birthdate, setBirthdate] = useState('');
   const [pwHint, setPwHint] = useState('');
@@ -27,9 +29,20 @@ const CustomerModal = ({ show, onHide, onSave, customer }) => {
     if (customer) {
       setName(customer.name);
       setPhone(customer.phone);
-      setCardNumber(customer.cardNumber || '');
+      setGender(customer.gender || '');
       setBankName(customer.bankName || '');
       setAccountNumber(customer.accountNumber || '');
+      // 기존 고객의 카드 정보를 새로운 형식으로 변환
+      if (customer.cards && Array.isArray(customer.cards)) {
+        setCards(customer.cards);
+      } else if (customer.cardNumber) {
+        setCards([{
+          cardNumber: customer.cardNumber || '',
+          cardCompany: customer.cardCompany || ''
+        }]);
+      } else {
+        setCards([{ cardNumber: '', cardCompany: '' }]);
+      }
       setCarrier(customer.carrier || '');
       setBirthdate(customer.birthdate || '');
       setPwHint(customer.pw_hint || '');
@@ -37,9 +50,10 @@ const CustomerModal = ({ show, onHide, onSave, customer }) => {
     } else {
       setName('');
       setPhone('');
-      setCardNumber('');
+      setGender('');
       setBankName('');
       setAccountNumber('');
+      setCards([{ cardNumber: '', cardCompany: '' }]);
       setCarrier('');
       setBirthdate('');
       setPwHint('');
@@ -47,12 +61,42 @@ const CustomerModal = ({ show, onHide, onSave, customer }) => {
     }
   }, [customer]);
 
+  const addCard = () => {
+    setCards([...cards, { cardNumber: '', cardCompany: '' }]);
+  };
+
+  const removeCard = (index) => {
+    if (cards.length > 1) {
+      const newCards = cards.filter((_, i) => i !== index);
+      setCards(newCards);
+    }
+  };
+
+  const updateCard = (index, field, value) => {
+    const newCards = [...cards];
+    newCards[index][field] = value;
+    setCards(newCards);
+  };
+
   const handleSave = () => {
     if (!name || !phone) {
       alert('이름과 전화번호는 필수 항목입니다.');
       return;
     }
-    onSave({ ...customer, name, phone, cardNumber, bankName, accountNumber, carrier, birthdate, pw_hint: pwHint, memo });
+    const validCards = cards.filter(card => card.cardNumber || card.cardCompany);
+    onSave({ 
+      ...customer, 
+      name, 
+      phone, 
+      gender,
+      bankName,
+      accountNumber,
+      cards: validCards.length > 0 ? validCards : [{ cardNumber: '', cardCompany: '' }],
+      carrier, 
+      birthdate, 
+      pw_hint: pwHint, 
+      memo 
+    });
   };
 
   return (
@@ -63,9 +107,32 @@ const CustomerModal = ({ show, onHide, onSave, customer }) => {
       <Modal.Body>
         <Row>
           <Col md={6}>
-            <Form.Group className="mb-3"><Form.Label>이름</Form.Label><Form.Control type="text" value={name} onChange={(e) => setName(e.target.value)} required /></Form.Group>
-            <Form.Group className="mb-3"><Form.Label>전화번호</Form.Label><Form.Control type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required /></Form.Group>
-            <Form.Group className="mb-3"><Form.Label>생년월일</Form.Label><Form.Control type="text" placeholder="YYMMDD" maxLength={6} value={birthdate} onChange={(e) => setBirthdate(e.target.value)} /></Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>이름</Form.Label>
+              <Form.Control type="text" value={name} onChange={(e) => setName(e.target.value)} required />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>전화번호</Form.Label>
+              <Form.Control type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+            </Form.Group>
+            <Row>
+              <Col sm={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>성별</Form.Label>
+                  <Form.Select value={gender} onChange={(e) => setGender(e.target.value)}>
+                    <option value="">성별 선택</option>
+                    <option value="male">남성</option>
+                    <option value="female">여성</option>
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+              <Col sm={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>생년월일</Form.Label>
+                  <Form.Control type="text" placeholder="YYMMDD" maxLength={6} value={birthdate} onChange={(e) => setBirthdate(e.target.value)} />
+                </Form.Group>
+              </Col>
+            </Row>
             <Form.Group className="mb-3">
               <Form.Label>통신사</Form.Label>
               <Form.Select value={carrier} onChange={(e) => setCarrier(e.target.value)}>
@@ -78,15 +145,88 @@ const CustomerModal = ({ show, onHide, onSave, customer }) => {
                 <option value="LG U+ 알뜰폰">LG U+ 알뜰폰</option>
               </Form.Select>
             </Form.Group>
-            <Form.Group className="mb-3"><Form.Label>비밀번호 앞 2자리</Form.Label><Form.Control type="text" value={pwHint} onChange={(e) => setPwHint(e.target.value)} maxLength={2} /></Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>비밀번호 앞 2자리</Form.Label>
+              <Form.Control type="text" value={pwHint} onChange={(e) => setPwHint(e.target.value)} maxLength={2} />
+            </Form.Group>
           </Col>
           <Col md={6}>
-            <Form.Group className="mb-3"><Form.Label>카드번호</Form.Label><Form.Control type="text" value={cardNumber} onChange={(e) => setCardNumber(e.target.value)} /></Form.Group>
-            <Form.Group className="mb-3"><Form.Label>은행명</Form.Label><Form.Control type="text" value={bankName} onChange={(e) => setBankName(e.target.value)} /></Form.Group>
-            <Form.Group className="mb-3"><Form.Label>은행계좌</Form.Label><Form.Control type="text" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} /></Form.Group>
+            {/* 은행 계좌 정보 (단일) */}
+            <h6 className="mb-3">은행 계좌 정보</h6>
+            <Form.Group className="mb-3">
+              <Form.Label>은행명</Form.Label>
+              <Form.Control 
+                type="text" 
+                value={bankName} 
+                onChange={(e) => setBankName(e.target.value)}
+                placeholder="은행명 입력"
+              />
+            </Form.Group>
+            <Form.Group className="mb-4">
+              <Form.Label>계좌번호</Form.Label>
+              <Form.Control 
+                type="text" 
+                value={accountNumber} 
+                onChange={(e) => setAccountNumber(e.target.value)}
+                placeholder="계좌번호 입력"
+              />
+            </Form.Group>
+            
+            {/* 카드 정보 (복수) */}
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h6 className="mb-0">카드 정보</h6>
+              <Button variant="outline-primary" size="sm" onClick={addCard} className="icon-text">
+                <PlusCircleFill /> 카드 추가
+              </Button>
+            </div>
+            {cards.map((card, index) => (
+              <Card key={index} className="mb-3 p-3" style={{backgroundColor: 'var(--background-primary)'}}>
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <small className="text-muted fw-bold">카드 {index + 1}</small>
+                  {cards.length > 1 && (
+                    <Button variant="outline-danger" size="sm" onClick={() => removeCard(index)}>
+                      <TrashFill />
+                    </Button>
+                  )}
+                </div>
+                <Form.Group className="mb-2">
+                  <Form.Label className="small">카드번호</Form.Label>
+                  <Form.Control 
+                    type="text" 
+                    value={card.cardNumber} 
+                    onChange={(e) => updateCard(index, 'cardNumber', e.target.value)}
+                    placeholder="카드번호 입력"
+                    size="sm"
+                  />
+                </Form.Group>
+                <Form.Group className="mb-0">
+                  <Form.Label className="small">카드사</Form.Label>
+                  <Form.Select 
+                    value={card.cardCompany} 
+                    onChange={(e) => updateCard(index, 'cardCompany', e.target.value)}
+                    size="sm"
+                  >
+                    <option value="">카드사 선택</option>
+                    <option value="삼성카드">삼성카드</option>
+                    <option value="현대카드">현대카드</option>
+                    <option value="롯데카드">롯데카드</option>
+                    <option value="신한카드">신한카드</option>
+                    <option value="KB국민카드">KB국민카드</option>
+                    <option value="우리카드">우리카드</option>
+                    <option value="하나카드">하나카드</option>
+                    <option value="농협카드">농협카드</option>
+                    <option value="시티카드">시티카드</option>
+                    <option value="BC카드">BC카드</option>
+                  </Form.Select>
+                </Form.Group>
+              </Card>
+            ))}
           </Col>
         </Row>
-        <Form.Group className="mb-3"><Form.Label>메모</Form.Label><Form.Control as="textarea" rows={3} value={memo} onChange={(e) => setMemo(e.target.value)} /></Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>메모</Form.Label>
+          <Form.Control as="textarea" rows={3} value={memo} onChange={(e) => setMemo(e.target.value)} />
+        </Form.Group>
       </Modal.Body>
       <Modal.Footer>
         <Button variant="secondary" onClick={onHide}>취소</Button>
@@ -109,12 +249,38 @@ function Customers() {
   const [modalFilterType, setModalFilterType] = useState('all');
   const [modalSelectedDate, setModalSelectedDate] = useState(new Date().toISOString().slice(0, 10));
   const [modalFilteredSales, setModalFilteredSales] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
+  // Firestore에서 고객 데이터 실시간 구독
   useEffect(() => {
-    const savedCustomers = localStorage.getItem('customers');
-    if (savedCustomers) setCustomers(JSON.parse(savedCustomers));
+    setLoading(true);
+    setError(null);
+    
+    console.log('고객 데이터 구독 시작...');
+    
+    const unsubscribe = customersService.subscribe(
+      (customersData) => {
+        console.log('고객 데이터 수신:', customersData.length, '개');
+        setCustomers(customersData);
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Customer data subscription error:', error);
+        setError('고객 데이터를 불러오는데 실패했습니다. 로컬 데이터를 사용합니다.');
+        setLoading(false);
+        const savedCustomers = localStorage.getItem('customers');
+        if (savedCustomers) {
+          setCustomers(JSON.parse(savedCustomers));
+        }
+      }
+    );
+
+    // 매출 데이터도 가져오기 (고객별 총 매출 계산용)
     const savedSales = localStorage.getItem('sales');
     if (savedSales) setSales(JSON.parse(savedSales));
+
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -145,23 +311,30 @@ function Customers() {
     setModalFilteredSales(result);
   }, [selectedCustomer, modalFilterType, modalSelectedDate]);
 
-  const handleSaveCustomer = (customerData) => {
-    let updatedCustomers;
-    if (customerData.id) {
-      updatedCustomers = customers.map(c => c.id === customerData.id ? { ...c, ...customerData } : c);
-    } else {
-      updatedCustomers = [...customers, { ...customerData, id: Date.now() }];
+  const handleSaveCustomer = async (customerData) => {
+    try {
+      if (customerData.id) {
+        // 기존 고객 수정
+        await customersService.update(customerData.id, customerData);
+      } else {
+        // 새 고객 추가
+        await customersService.add(customerData);
+      }
+      setShowEditModal(false);
+    } catch (error) {
+      console.error('고객 저장 오류:', error);
+      alert('고객 저장에 실패했습니다. 다시 시도해주세요.');
     }
-    setCustomers(updatedCustomers);
-    localStorage.setItem('customers', JSON.stringify(updatedCustomers));
-    setShowEditModal(false);
   };
 
-  const handleDeleteClick = (customerId) => {
+  const handleDeleteClick = async (customerId) => {
     if (window.confirm('정말로 이 고객을 삭제하시겠습니까? 관련 매출 기록은 삭제되지 않습니다.')) {
-      const updatedCustomers = customers.filter(c => c.id !== customerId);
-      setCustomers(updatedCustomers);
-      localStorage.setItem('customers', JSON.stringify(updatedCustomers));
+      try {
+        await customersService.delete(customerId);
+      } catch (error) {
+        console.error('고객 삭제 오류:', error);
+        alert('고객 삭제에 실패했습니다. 다시 시도해주세요.');
+      }
     }
   };
 
@@ -173,13 +346,16 @@ function Customers() {
     setShowDetailsModal(true);
   };
   
-  const handleSaveMemo = () => {
+  const handleSaveMemo = async () => {
     if (!selectedCustomer) return;
-    const updatedCustomers = customers.map(c => c.id === selectedCustomer.id ? { ...c, memo: detailsMemo } : c);
-    setCustomers(updatedCustomers);
-    localStorage.setItem('customers', JSON.stringify(updatedCustomers));
-    setShowMemoSaveAlert(true);
-    setTimeout(() => setShowMemoSaveAlert(false), 2000);
+    try {
+      await customersService.update(selectedCustomer.id, { ...selectedCustomer, memo: detailsMemo });
+      setShowMemoSaveAlert(true);
+      setTimeout(() => setShowMemoSaveAlert(false), 2000);
+    } catch (error) {
+      console.error('메모 저장 오류:', error);
+      alert('메모 저장에 실패했습니다.');
+    }
   };
 
   const modalTotalAmount = modalFilteredSales.reduce((total, sale) => total + sale.amount, 0);
@@ -214,14 +390,56 @@ function Customers() {
                   </Row>
                 </Card.Header>
                 <Card.Body onClick={() => handleDetailsClick(customer)} style={{ cursor: 'pointer' }}>
-                  <Row>
-                    <Col xs={12} md={6}><p><strong>전화번호:</strong> {customer.phone}</p></Col>
-                    <Col xs={12} md={6}><p><strong>생년월일:</strong> {customer.birthdate}</p></Col>
-                    <Col xs={12} md={6}><p><strong>통신사:</strong> {customer.carrier}</p></Col>
-                    <Col xs={12} md={6}><p><strong>카드번호:</strong> {customer.cardNumber}</p></Col>
-                    <Col xs={12} md={6}><p><strong>은행명:</strong> {customer.bankName}</p></Col>
-                    <Col xs={12} md={6}><p><strong>은행계좌:</strong> {customer.accountNumber}</p></Col>
+                  <Row className="customer-info-row">
+                    <Col xs={12} md={4}><p><strong>전화번호:</strong> {customer.phone}</p></Col>
+                    <Col xs={6} md={2}><p><strong>성별:</strong> {customer.gender === 'male' ? '남성' : customer.gender === 'female' ? '여성' : '-'}</p></Col>
+                    <Col xs={6} md={3}><p><strong>생년월일:</strong> {customer.birthdate || '-'}</p></Col>
+                    <Col xs={12} md={3}><p><strong>통신사:</strong> {customer.carrier || '-'}</p></Col>
                   </Row>
+                  <div>
+                    {/* 은행 계좌 정보 */}
+                    {(customer.bankName || customer.accountNumber) && (
+                      <div className="mb-3">
+                        <h6 className="text-primary mb-2">은행 계좌 정보</h6>
+                        <Card className="customer-info-card" style={{backgroundColor: 'var(--background-primary)', border: '1px solid var(--border-color)'}}>
+                          <div className="small">
+                            <Row>
+                              {customer.bankName && <Col xs={12} sm={6}><span className="text-muted">은행:</span> {customer.bankName}</Col>}
+                              {customer.accountNumber && <Col xs={12} sm={6}><span className="text-muted">계좌:</span> {customer.accountNumber}</Col>}
+                            </Row>
+                          </div>
+                        </Card>
+                      </div>
+                    )}
+                    
+                    {/* 카드 정보 */}
+                    <div>
+                      <h6 className="text-primary mb-2">카드 정보</h6>
+                      {(() => {
+                        const cards = customer.cards && Array.isArray(customer.cards) 
+                          ? customer.cards 
+                          : customer.cardNumber 
+                            ? [{ cardNumber: customer.cardNumber, cardCompany: customer.cardCompany || '' }]
+                            : [];
+                        
+                        if (cards.length === 0) {
+                          return <p className="text-muted small">등록된 카드 정보가 없습니다.</p>;
+                        }
+                        
+                        return cards.map((card, index) => (
+                          <Card key={index} className="customer-info-card" style={{backgroundColor: 'var(--background-primary)', border: '1px solid var(--border-color)'}}>
+                            <div className="small">
+                              <strong className="text-secondary">카드 {index + 1}</strong>
+                              <Row className="mt-1">
+                                {card.cardNumber && <Col xs={12} sm={6}><span className="text-muted">번호:</span> {card.cardNumber}</Col>}
+                                {card.cardCompany && <Col xs={12} sm={6}><span className="text-muted">카드사:</span> {card.cardCompany}</Col>}
+                              </Row>
+                            </div>
+                          </Card>
+                        ));
+                      })()}
+                    </div>
+                  </div>
                 </Card.Body>
                 <Card.Footer onClick={() => handleDetailsClick(customer)} style={{ cursor: 'pointer' }}>
                   <strong>총 매출액: {formatCurrency(customer.totalSales)} 원</strong>
