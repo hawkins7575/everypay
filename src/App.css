@@ -233,17 +233,23 @@ body {
 /* Mobile-First Responsive Design */
 @media (max-width: 768px) {
   body {
-    font-size: 0.875rem;
+    font-size: 0.75rem;
+  }
+
+  /* 컨테이너 패딩 최소화 */
+  .container {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
   }
 
   .card-custom {
-    padding: 1rem;
-    margin-top: 1rem;
+    padding: 0.75rem;
+    margin-top: 0.5rem;
     border-radius: var(--radius-md);
   }
 
   .mobile-card {
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
     box-shadow: var(--shadow-md);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
@@ -251,16 +257,16 @@ body {
   }
 
   .mobile-card .card-body {
-    padding: 1.25rem;
+    padding: 0.75rem;
   }
 
   .mobile-card-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.75rem 0;
+    padding: 0.5rem 0;
     border-bottom: 1px solid var(--border-color);
-    min-height: 2.5rem;
+    min-height: 2rem;
   }
   
   .mobile-card-row:last-child {
@@ -270,18 +276,18 @@ body {
   .mobile-card-label {
     font-weight: 500;
     color: var(--text-secondary);
-    font-size: 0.8125rem;
+    font-size: 0.7rem;
   }
 
   .mobile-card-value {
     text-align: right;
     font-weight: 500;
     color: var(--text-primary);
-    font-size: 0.8125rem;
+    font-size: 0.7rem;
   }
   
   .mobile-totals-card {
-    margin-top: 1rem;
+    margin-top: 0.75rem;
     background: linear-gradient(135deg, var(--primary-color) 0%, #0D9488 100%);
     color: white;
   }
@@ -294,7 +300,36 @@ body {
   /* Enhanced button spacing on mobile */
   .btn {
     margin-bottom: 0.5rem;
-    min-height: 2.75rem;
+    min-height: 2.5rem;
+    font-size: 0.75rem;
+  }
+
+  /* 모바일에서 폼 요소들도 작게 */
+  .form-control, .form-select {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  /* 테이블 텍스트 크기 줄이기 */
+  .table {
+    font-size: 0.7rem;
+  }
+
+  .table th, .table td {
+    padding: 0.5rem 0.25rem;
+  }
+
+  /* 네비게이션과 제목 크기 조정 */
+  .navbar-brand {
+    font-size: 1rem;
+  }
+
+  h1, h2, h3 {
+    font-size: 1.1rem;
+  }
+
+  h4, h5, h6 {
+    font-size: 1rem;
   }
 
   /* Better form controls on mobile */
