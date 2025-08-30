@@ -1,7 +1,7 @@
 import React from 'react';
 import { Nav, Navbar } from 'react-bootstrap';
 import { LinkContainer } from 'react-router-bootstrap';
-import { HouseFill, PeopleFill, GraphUp } from 'react-bootstrap-icons';
+import { HouseFill, PeopleFill, Trophy, Calendar3 } from 'react-bootstrap-icons';
 import './BottomNavigationBar.css';
 
 const BottomNavigationBar = () => {
@@ -10,20 +10,26 @@ const BottomNavigationBar = () => {
       <Nav className="w-100 justify-content-around">
         <LinkContainer to="/sales">
           <Nav.Link className="text-center">
-            <HouseFill size={24} />
+            <HouseFill size={20} />
             <div>판매</div>
           </Nav.Link>
         </LinkContainer>
         <LinkContainer to="/customers">
           <Nav.Link className="text-center">
-            <PeopleFill size={24} />
+            <PeopleFill size={20} />
             <div>고객</div>
+          </Nav.Link>
+        </LinkContainer>
+        <LinkContainer to="/soccer">
+          <Nav.Link className="text-center">
+            <Trophy size={20} />
+            <div>축구</div>
           </Nav.Link>
         </LinkContainer>
         <LinkContainer to="/marketing">
           <Nav.Link className="text-center">
-            <GraphUp size={24} />
-            <div>분석</div>
+            <Calendar3 size={20} />
+            <div>스케줄</div>
           </Nav.Link>
         </LinkContainer>
       </Nav>

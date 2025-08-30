@@ -5,6 +5,7 @@ import { Container } from 'react-bootstrap';
 import BottomNavigationBar from './components/BottomNavigationBar'; // Import BottomNavigationBar
 import Sales from './pages/Sales';
 import Customers from './pages/Customers';
+import Soccer from './pages/Soccer';
 import Marketing from './pages/Marketing';
 import './App.css'; // Import custom CSS
 
@@ -19,6 +20,7 @@ function App() {
               <Route path="/" element={<Sales />} />
               <Route path="/sales" element={<Sales />} />
               <Route path="/customers" element={<Customers />} />
+              <Route path="/soccer" element={<Soccer />} />
               <Route path="/marketing" element={<Marketing />} />
             </Routes>
           </Container>

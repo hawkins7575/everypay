@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Form, Button, Table, ButtonGroup, Modal, Row, Col, Alert, Card } from 'react-bootstrap';
 import { PlusCircleFill, PencilFill, TrashFill } from 'react-bootstrap-icons';
-import { customersService } from '../firebase/firestore';
+import { customersService, salesService } from '../firebase/firestore';
 
 // Helper Functions
 const formatCurrency = (value) => Math.floor(value || 0).toLocaleString();
@@ -19,7 +19,7 @@ const CustomerModal = ({ show, onHide, onSave, customer }) => {
   const [gender, setGender] = useState('');
   const [bankName, setBankName] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
-  const [cards, setCards] = useState([{ cardNumber: '', cardCompany: '' }]);
+  const [cards, setCards] = useState([{ cardNumber: '', cardCompany: '', expiryDate: '', passwordHint: '' }]);
   const [carrier, setCarrier] = useState('');
   const [birthdate, setBirthdate] = useState('');
   const [pwHint, setPwHint] = useState('');
@@ -38,10 +38,12 @@ const CustomerModal = ({ show, onHide, onSave, customer }) => {
       } else if (customer.cardNumber) {
         setCards([{
           cardNumber: customer.cardNumber || '',
-          cardCompany: customer.cardCompany || ''
+          cardCompany: customer.cardCompany || '',
+          expiryDate: customer.expiryDate || '',
+          passwordHint: customer.passwordHint || ''
         }]);
       } else {
-        setCards([{ cardNumber: '', cardCompany: '' }]);
+        setCards([{ cardNumber: '', cardCompany: '', expiryDate: '', passwordHint: '' }]);
       }
       setCarrier(customer.carrier || '');
       setBirthdate(customer.birthdate || '');
@@ -53,7 +55,7 @@ const CustomerModal = ({ show, onHide, onSave, customer }) => {
       setGender('');
       setBankName('');
       setAccountNumber('');
-      setCards([{ cardNumber: '', cardCompany: '' }]);
+      setCards([{ cardNumber: '', cardCompany: '', expiryDate: '', passwordHint: '' }]);
       setCarrier('');
       setBirthdate('');
       setPwHint('');
@@ -62,7 +64,7 @@ const CustomerModal = ({ show, onHide, onSave, customer }) => {
   }, [customer]);
 
   const addCard = () => {
-    setCards([...cards, { cardNumber: '', cardCompany: '' }]);
+    setCards([...cards, { cardNumber: '', cardCompany: '', expiryDate: '', passwordHint: '' }]);
   };
 
   const removeCard = (index) => {
@@ -83,7 +85,7 @@ const CustomerModal = ({ show, onHide, onSave, customer }) => {
       alert('이름과 전화번호는 필수 항목입니다.');
       return;
     }
-    const validCards = cards.filter(card => card.cardNumber || card.cardCompany);
+    const validCards = cards.filter(card => card.cardNumber || card.cardCompany || card.expiryDate || card.passwordHint);
     onSave({ 
       ...customer, 
       name, 
@@ -91,7 +93,7 @@ const CustomerModal = ({ show, onHide, onSave, customer }) => {
       gender,
       bankName,
       accountNumber,
-      cards: validCards.length > 0 ? validCards : [{ cardNumber: '', cardCompany: '' }],
+      cards: validCards.length > 0 ? validCards : [{ cardNumber: '', cardCompany: '', expiryDate: '', passwordHint: '' }],
       carrier, 
       birthdate, 
       pw_hint: pwHint, 
@@ -145,10 +147,6 @@ const CustomerModal = ({ show, onHide, onSave, customer }) => {
                 <option value="LG U+ 알뜰폰">LG U+ 알뜰폰</option>
               </Form.Select>
             </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>비밀번호 앞 2자리</Form.Label>
-              <Form.Control type="text" value={pwHint} onChange={(e) => setPwHint(e.target.value)} maxLength={2} />
-            </Form.Group>
           </Col>
           <Col md={6}>
             {/* 은행 계좌 정보 (단일) */}
@@ -199,7 +197,7 @@ const CustomerModal = ({ show, onHide, onSave, customer }) => {
                     size="sm"
                   />
                 </Form.Group>
-                <Form.Group className="mb-0">
+                <Form.Group className="mb-2">
                   <Form.Label className="small">카드사</Form.Label>
                   <Form.Select 
                     value={card.cardCompany} 
@@ -219,6 +217,34 @@ const CustomerModal = ({ show, onHide, onSave, customer }) => {
                     <option value="BC카드">BC카드</option>
                   </Form.Select>
                 </Form.Group>
+                <Row>
+                  <Col xs={6}>
+                    <Form.Group className="mb-2">
+                      <Form.Label className="small">유효기간</Form.Label>
+                      <Form.Control 
+                        type="text" 
+                        value={card.expiryDate} 
+                        onChange={(e) => updateCard(index, 'expiryDate', e.target.value)}
+                        placeholder="MM/YY"
+                        maxLength={5}
+                        size="sm"
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col xs={6}>
+                    <Form.Group className="mb-0">
+                      <Form.Label className="small">비번 앞2자리</Form.Label>
+                      <Form.Control 
+                        type="text" 
+                        value={card.passwordHint} 
+                        onChange={(e) => updateCard(index, 'passwordHint', e.target.value)}
+                        placeholder="**"
+                        maxLength={2}
+                        size="sm"
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
               </Card>
             ))}
           </Col>
@@ -269,6 +295,24 @@ function Customers() {
         console.error('Customer data subscription error:', error);
         setError('고객 데이터를 불러오는데 실패했습니다.');
         setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  // Firestore에서 매출 데이터 실시간 구독
+  useEffect(() => {
+    console.log('매출 데이터 구독 시작...');
+    
+    const unsubscribe = salesService.subscribe(
+      (salesData) => {
+        console.log('매출 데이터 수신:', salesData.length, '개');
+        setSales(salesData);
+      },
+      (error) => {
+        console.error('Sales data subscription error:', error);
+        setError('매출 데이터를 불러오는데 실패했습니다.');
       }
     );
 
@@ -411,7 +455,12 @@ function Customers() {
                         const cards = customer.cards && Array.isArray(customer.cards) 
                           ? customer.cards 
                           : customer.cardNumber 
-                            ? [{ cardNumber: customer.cardNumber, cardCompany: customer.cardCompany || '' }]
+                            ? [{ 
+                                cardNumber: customer.cardNumber, 
+                                cardCompany: customer.cardCompany || '', 
+                                expiryDate: customer.expiryDate || '', 
+                                passwordHint: customer.passwordHint || '' 
+                              }]
                             : [];
                         
                         if (cards.length === 0) {
@@ -425,6 +474,10 @@ function Customers() {
                               <Row className="mt-1">
                                 {card.cardNumber && <Col xs={12} sm={6}><span className="text-muted">번호:</span> {card.cardNumber}</Col>}
                                 {card.cardCompany && <Col xs={12} sm={6}><span className="text-muted">카드사:</span> {card.cardCompany}</Col>}
+                              </Row>
+                              <Row className="mt-1">
+                                {card.expiryDate && <Col xs={12} sm={6}><span className="text-muted">유효기간:</span> {card.expiryDate}</Col>}
+                                {card.passwordHint && <Col xs={12} sm={6}><span className="text-muted">비번 앞2자리:</span> {card.passwordHint}</Col>}
                               </Row>
                             </div>
                           </Card>
