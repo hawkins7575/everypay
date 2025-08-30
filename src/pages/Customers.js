@@ -47,7 +47,7 @@ const sendSMS = (phoneNumber) => {
     
     // 잠시 후 다른 방법들도 시도
     setTimeout(() => {
-      if (confirm(`문자 앱이 열리지 않았나요? 다른 방법을 시도하시겠습니까?\n전화번호: ${phoneNumber}`)) {
+      if (window.confirm(`문자 앱이 열리지 않았나요? 다른 방법을 시도하시겠습니까?\n전화번호: ${phoneNumber}`)) {
         // 사용자가 수동으로 복사할 수 있도록 전화번호를 클립보드에 복사
         navigator.clipboard.writeText(cleanNumber).then(() => {
           alert('전화번호가 클립보드에 복사되었습니다. 문자 앱에서 붙여넣기 해주세요.');
