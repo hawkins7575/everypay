@@ -12,6 +12,53 @@ const getStartOfWeek = (date) => {
   return new Date(d.setDate(diff));
 };
 
+// 문자 발송 함수
+const sendSMS = (phoneNumber) => {
+  const cleanNumber = phoneNumber.replace(/-/g, '');
+  
+  // 모바일 환경 감지
+  const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  
+  if (isMobile) {
+    // iOS와 Android에서 문자 앱 실행
+    if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      window.location.href = `sms:${cleanNumber}`;
+    } else if (/Android/i.test(navigator.userAgent)) {
+      // Android에서는 여러 방법 시도
+      try {
+        window.location.href = `sms:${cleanNumber}`;
+      } catch (e) {
+        window.location.href = `smsto:${cleanNumber}`;
+      }
+    } else {
+      window.location.href = `sms:${cleanNumber}`;
+    }
+  } else {
+    // 데스크톱에서는 여러 방법들을 순서대로 시도
+    const protocols = [
+      `sms:${cleanNumber}`,
+      `smsto:${cleanNumber}`,
+      `mms:${cleanNumber}`,
+      `ms-chat:?ContactID=${cleanNumber}`
+    ];
+    
+    // 첫 번째 프로토콜 시도
+    window.location.href = protocols[0];
+    
+    // 잠시 후 다른 방법들도 시도
+    setTimeout(() => {
+      if (confirm(`문자 앱이 열리지 않았나요? 다른 방법을 시도하시겠습니까?\n전화번호: ${phoneNumber}`)) {
+        // 사용자가 수동으로 복사할 수 있도록 전화번호를 클립보드에 복사
+        navigator.clipboard.writeText(cleanNumber).then(() => {
+          alert('전화번호가 클립보드에 복사되었습니다. 문자 앱에서 붙여넣기 해주세요.');
+        }).catch(() => {
+          alert(`전화번호: ${cleanNumber}\n수동으로 복사하여 문자 앱에 붙여넣기 해주세요.`);
+        });
+      }
+    }, 2000);
+  }
+};
+
 // Customer Add/Edit Modal Component
 const CustomerModal = ({ show, onHide, onSave, customer }) => {
   const [name, setName] = useState('');
@@ -431,8 +478,12 @@ function Customers() {
                       <p>
                         <strong>전화번호:</strong> 
                         <a 
-                          href={`sms:${customer.phone}`}
-                          onClick={(e) => e.stopPropagation()}
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            sendSMS(customer.phone);
+                          }}
                           className="text-primary text-decoration-none ms-2 d-inline-flex align-items-center"
                           style={{ cursor: 'pointer' }}
                           title="문자 보내기"
@@ -521,7 +572,11 @@ function Customers() {
                   <small className="text-muted">
                     전화번호: 
                     <a 
-                      href={`sms:${selectedCustomer.phone}`}
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        sendSMS(selectedCustomer.phone);
+                      }}
                       className="text-primary text-decoration-none ms-2 d-inline-flex align-items-center"
                       title="문자 보내기"
                     >
