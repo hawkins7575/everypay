@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Form, Button, Table, ButtonGroup, Modal, Row, Col, Alert, Card } from 'react-bootstrap';
-import { PlusCircleFill, PencilFill, TrashFill } from 'react-bootstrap-icons';
+import { PlusCircleFill, PencilFill, TrashFill, ChatDots } from 'react-bootstrap-icons';
 import { customersService, salesService } from '../firebase/firestore';
 
 // Helper Functions
@@ -427,7 +427,21 @@ function Customers() {
                 </Card.Header>
                 <Card.Body onClick={() => handleDetailsClick(customer)} style={{ cursor: 'pointer' }}>
                   <Row className="customer-info-row">
-                    <Col xs={12} md={4}><p><strong>전화번호:</strong> {customer.phone}</p></Col>
+                    <Col xs={12} md={4}>
+                      <p>
+                        <strong>전화번호:</strong> 
+                        <a 
+                          href={`sms:${customer.phone}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-primary text-decoration-none ms-2 d-inline-flex align-items-center"
+                          style={{ cursor: 'pointer' }}
+                          title="문자 보내기"
+                        >
+                          <ChatDots size={16} className="me-1" />
+                          {customer.phone}
+                        </a>
+                      </p>
+                    </Col>
                     <Col xs={6} md={2}><p><strong>성별:</strong> {customer.gender === 'male' ? '남성' : customer.gender === 'female' ? '여성' : '-'}</p></Col>
                     <Col xs={6} md={3}><p><strong>생년월일:</strong> {customer.birthdate || '-'}</p></Col>
                     <Col xs={12} md={3}><p><strong>통신사:</strong> {customer.carrier || '-'}</p></Col>
@@ -499,7 +513,26 @@ function Customers() {
 
       {selectedCustomer && (
         <Modal show={showDetailsModal} onHide={() => setShowDetailsModal(false)} size="xl">
-          <Modal.Header closeButton className="modal-header-custom"><Modal.Title>{selectedCustomer.name} 님의 상세 정보</Modal.Title></Modal.Header>
+          <Modal.Header closeButton className="modal-header-custom">
+            <Modal.Title>
+              <div>
+                {selectedCustomer.name} 님의 상세 정보
+                <div className="mt-2">
+                  <small className="text-muted">
+                    전화번호: 
+                    <a 
+                      href={`sms:${selectedCustomer.phone}`}
+                      className="text-primary text-decoration-none ms-2 d-inline-flex align-items-center"
+                      title="문자 보내기"
+                    >
+                      <ChatDots size={14} className="me-1" />
+                      {selectedCustomer.phone}
+                    </a>
+                  </small>
+                </div>
+              </div>
+            </Modal.Title>
+          </Modal.Header>
           <Modal.Body>
             <Row>
               <Col md={8}>
